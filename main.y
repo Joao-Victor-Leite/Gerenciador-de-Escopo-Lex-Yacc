@@ -5,81 +5,39 @@ void yyerror(char* s);
 #include <stdio.h>
 #include <string.h>
 
+
+typedef struct Pilha{
+    No* topo;
+} pilha;
+
+typedef struct No {
+    variavel variavel;
+    struct No* prox;
+} no;
+
 typedef enum {
   TIPO_NUMERO,
   TIPO_CADEIA
 } tipoVariavel;
 
-typedef struct pilha {
-  tabela *variavel;
-  struct pilha *prox;
-} pilha;
-
-typedef struct tabela{
+typedef struct Variavel {
+  TipoVariavel tipo_variavel;
   char *tipo;
   char *nome;
-  TipoVariavel tipo_variavel;
   union {
     int numero;
     char *cadeia;
   } valor;
-  struct variavel *prox;
-} tabela;
-
-pilha *criarPilha() {
-  return NULL;
-}
-
-pilha *push(pilha *p) {
-  pilha *novo = (pilha *)malloc(sizeof(pilha));
-  novo -> variavel = NULL;
-  novo -> prox = p;
-  printf("push\n");
-  return novo;
-}
-
-pilha *pop(pilha *p) {
-  if (p == NULL) return NULL;
-  pilha *temp = p->prox;
-  free(p);
-  printf("pop\n");
-  return temp;
-}
-
-tabela* procurar_variavel_em_pilha(pilha *p, char *id){
-  pilha *temp = p;
-  while (temp != NULL){
-    tabela *expressao = temp->variavel;
-    while (expressao != NULL){
-      if(strcmp(expressao->nome, id) == 0){
-        return expressao;
-      }
-      expressao = expressao->prox;
-    }
-    temp = temp->prox;
-  }
-  return NULL;
-}
+} variavel;
 
 
-
-tabela* procurar_tipo_variavel_em_pilha(pilha* p, char *tipo){
-  pilha *temp = p;
-  while (temp != NULL){
-    tabela *expressao = temp->variavel;
-    while (expressao != NULL){
-      if(strcmp(expressao->tipo, tipo) == 0){
-        return expressao;
-      }
-      expressao = expressao->prox;
-    }
-    temp = temp->prox;
-  }
-  return NULL;
-}
-
-tabela* procurar_variavel_em_pilha(pilha *, char *);
-tabela* procurar_tipo_variavel_em_pilha(pilha*, char *);
+void iniciar_pilha(pilha *);
+void empilhar(pilha *, variavel *s);
+pilha* desempilhar(pilha *);
+variavel* desempilhar(pilha *);
+void imprimir_variavel(variavel);
+no* procurar_variavel_em_pilha(pilha *, char *);
+no* procurar_tipo_variavel_em_pilha(pilha*, char *);
 
 %}
 
@@ -114,7 +72,9 @@ fim_escopo:
 
 declaracao:
   TIPO_CADEIA declaracao_cadeia
+  | TIPO_CADEIA declaracao_multipla_cadeia
   | TIPO_NUMERO declaracao_numero
+  | TIPO_NUMERO declaracao_multipla_numero
   ;
 
 declaracao_cadeia:
@@ -128,7 +88,7 @@ declaracao_cadeia:
   }
   | TK_IDENTIFICADOR {
     char *s1 = $1;
-    if (procurar_variavel_em_pilha() == NULL){
+    if (procurar_variavel_em_pilha() != NULL){
       /* funcao para adicionar a variavel do tipo CADEIA naquele escopo ("CADEIA", s1, "") */
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
@@ -183,10 +143,9 @@ termo:
 
 impressao:
   PRINT TK_IDENTIFICADOR {
-    /* funcao para imprimir a variavel */
+    imprimir_variavel());
   }
 %%
-
 
 
 extern FILE *yyin;
@@ -199,3 +158,41 @@ int main() {
 void yyerror(char *s) {
    fprintf(stderr, "erro: %s\n", s);
 }
+
+void iniciar_pilha(pilha *p) {
+  p = (pilha *)malloc(sizeof(pilha));
+  p -> topo = NULL;
+}
+
+void empilhar(pilha *p, variavel *var) {
+  no *novo = (no *)malloc(sizeof(no));
+  if (novo_no == NULL) {
+    printf("Erro ao alocar memória.\n");
+    exit(1);
+  }
+  novo -> variavel = var;
+  novo -> prox = p -> topo;
+  p -> topo = novo;
+}
+
+variavel desempilhar(pilha* p){
+  if (p -> topo == NULL){
+    printf("Pilha vazia\n");
+    exit(1);
+  }
+  no *temp = p -> topo;
+  variavel var = temp -> variavel;
+  p -> topo = temp -> prox;
+  free(temp);
+  return var;
+}
+
+/* FALTA TERMINAR ESSA */
+void imprimir_variavel(variavel var){
+  if (var.tipo_variavel == TIPO_NUMERO){
+    printf("%d\n", var.valor.numero);
+  }else{
+    printf("%s\n", var.valor.cadeia);
+  }
+}
+
