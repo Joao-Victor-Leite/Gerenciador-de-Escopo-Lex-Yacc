@@ -12,14 +12,10 @@
 [ \t]*[0-9]+[ \t]*                      {yyval.number = atoi(yytext);return TK_NUMERO;}
 [ \t]*[a-z][a-zA-Z0-9_]*[ \t]*          {yyval.string = strdup(yytext); return TK_IDENTIFICADOR}
 [ \t]*\"[^\"]*\"[ \t]*                  {yyval.string = strdup(yytext); return TK_CADEIA;}
-\+                                      {return '+';}
+\+                                      {return MAIS;}
 \-                                      {return '-';}
-=                                       {return '=';}
+=                                       {return IGUAL;}
 ;                                       {return ';';}
 ,                                       {return ',';}
 [ \t]+                                  {/* ignorar espaços em branco */}
 %%
-
-int yywrap(void){
-    return 1;
-}
