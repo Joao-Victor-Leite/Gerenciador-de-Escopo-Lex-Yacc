@@ -12,6 +12,7 @@ typedef struct Pilha{
 
 typedef struct No {
     variavel variavel;
+    char *nome;
     int qtdVariaveis;
     struct No* prox;
 } no;
@@ -32,17 +33,13 @@ typedef struct Variavel {
 
 void iniciar_pilha(pilha *);
 void empilhar(pilha *, variavel *s);
-pilha* desempilhar(pilha *);
-
-variavel* desempilhar(pilha *);
-variavel* criar_variavel(Pilha *, char *, TipoVariavel, void *);
+variavel desempilhar(pilha* , char* );
 void imprimir_variavel(variavel);
-
 no* procurar_variavel_em_pilha(pilha *, char *);
 no* procurar_tipo_variavel_em_pilha(pilha*, char *);
-
-
+variavel* criar_variavel(Pilha *, char *, tipoVariavel, void *);
 %}
+
 
 %token BLOCO_INICIO BLOCO_FIM
 %token TIPO_NUMERO TIPO_CADEIA
@@ -50,9 +47,14 @@ no* procurar_tipo_variavel_em_pilha(pilha*, char *);
 %token MAIS IGUAL
 %token TK_IDENTIFICADOR TK_NUMERO TK_CADEIA
 
+%union 
+{
+	int number;
+  char *cadeia;
+}
 
 %%
-entrada:}
+entrada:
   linha
   | entrada linha
   ;
@@ -68,13 +70,16 @@ linha:
 
 inicio_escopo:
   BLOCO_INICIO{
-    printf("BLOCO_INICIO\n"); 
+    printf("BLOCO_INICIO\n");
+    empilhar(p, NULL);
   }
+  ;
 
 fim_escopo:
   BLOCO_FIM{
     printf("BLOCO_FIM\n");
   }
+  ;
 
 declaracao:
   TIPO_CADEIA declaracao_cadeia
@@ -86,42 +91,44 @@ declaracao:
 declaracao_cadeia:
   TK_IDENTIFICADOR IGUAL TK_CADEIA {
     char *s1 = $1;
-    no = procurar_variavel_em_pilha(p, s1);
-    if (no == NULL) {
-      criar_variavel(no, s1, TIPO_CADEIA, $3);
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual == NULL) {
+      criar_variavel(no_atual, s1, TIPO_CADEIA, $3);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
   | TK_IDENTIFICADOR {
     char *s1 = $1;
-    no = procurar_variavel_em_pilha(p, s1);
-    if (no == NULL) {
-      criar_variavel(no, s1, TIPO_CADEIA, "");
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual == NULL) {
+      criar_variavel(no_atual, s1, TIPO_CADEIA, "");
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
+  ;
 
 declaracao_numero:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
     char *s1 = $1;
-    no = procurar_variavel_em_pilha(p, s1);
-    if (no == NULL) {
-      criar_variavel(no, s1, TIPO_NUMERO, $3);
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual == NULL) {
+      criar_variavel(no_atual, s1, TIPO_NUMERO, $3);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
   | TK_NUMERO {
     char *s1 = $1;
-    no = procurar_variavel_em_pilha(p, s1);
-    if (no == NULL) {
-      criar_variavel(no, s1, TIPO_NUMERO, 0);
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual == NULL) {
+      criar_variavel(no_atual, s1, TIPO_NUMERO, 0);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
+  ;
 
 declaracao_multipla_cadeia:
   declaracao_cadeia
@@ -134,15 +141,68 @@ declaracao_multipla_numero:
   ;
 
 atribuicao:
-  TK_IDENTIFICADOR IGUAL TK_NUMERO {}
-  | TK_IDENTIFICADOR IGUAL TK_CADEIA {}
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR {}
-  | TK_IDENTIFICADOR IGUAL expressao {}
+  TK_IDENTIFICADOR IGUAL TK_NUMERO {
+    char *s1 = $1;
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual != NULL){
+      for (int i = 0; i < no_atual -> qtdVariaveis; i++){
+        if (strcmp(no_atual -> variavel[i].nome, s1) == 0){
+          no_atual -> variavel[i].valor.numero = $3;
+        }
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_CADEIA {
+    char *s1 = $1;
+    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    if (no_atual != NULL){
+      for (int i = 0; i < no_atual -> qtdVariaveis; i++){
+        if (strcmp(no_atual -> variavel[i].nome, s1) == 0){
+          no_atual -> variavel[i].valor.cadeia = $3;
+        }
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR {
+    char *s1 = $1;
+    char *s2 = $3;
+    no* no_atual_1 = procurar_variavel_em_pilha(p, s1);
+    no* no_atual_2 = procurar_variavel_em_pilha(p, s2);
+    if (no_atual_1 != NULL && no_atual_2 != NULL){
+      tipo_1 = procurar_tipo_variavel_em_pilha(p, s1);
+      tipo_2 = procurar_tipo_variavel_em_pilha(p, s2);
+      if (tipo_1 == tipo_2){
+        for (int i = 0; i < no_atual_1 -> qtdVariaveis; i++){
+          if (strcmp(no_atual_1 -> variavel[i].nome, s1) == 0){
+            for (int j = 0; j < no_atual_2 -> qtdVariaveis; j++){
+              if (strcmp(no_atual_2 -> variavel[j].nome, s2) == 0){
+                no_atual_1 -> variavel[i].valor = no_atual_2 -> variavel[j].valor;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL expressao
+  ;
 
 expressao:
   termo
   | expressao MAIS termo {
-    /* funcao para verificar se os tipos sao compativeis */
+    tipo_1 = procurar_tipo_variavel_em_pilha(p, $1);
+    tipo_2 = procurar_tipo_variavel_em_pilha(p, $3);
+    if(tipo_1 == TIPO_NUMERO && tipo_2 == TIPO_NUMERO){
+      $$ = $1 + $3;
+    }else if(tipo_1 == TIPO_CADEIA && tipo_2 == TIPO_CADEIA){
+      char* nova_cadeia = malloc(strlen($1) + strlen($3) + 1);
+      strcpy(nova_cadeia, $1);
+      strcat(nova_cadeia, $3);
+      $$ = nova_cadeia;
+    }else{
+      printf("Tipos incompativeis\n");
+      $$ = NULL;
+    }
   }
   ;
 
@@ -161,6 +221,7 @@ impressao:
       }
     }
   }
+  ;
 %%
 
 
@@ -191,16 +252,34 @@ void empilhar(pilha *p, variavel *var) {
   p -> topo = novo;
 }
 
-variavel desempilhar(pilha* p){
+variavel desempilhar(pilha* p, char* nomeNo){
   if (p -> topo == NULL){
     printf("Pilha vazia\n");
-    exit(1);
+    return;
   }
-  no *temp = p -> topo;
-  variavel var = temp -> variavel;
-  p -> topo = temp -> prox;
-  free(temp);
-  return var;
+
+  no* atual = p -> topo;
+  no* anterior = NULL;
+
+  while (atual != NULL && strcmp(atual->variavel->nome, nomeNo) != 0) {
+    anterior = atual;
+    atual = atual->prox;
+    if (anterior != p->topo) { // Evita liberar o topo antes de atualizá-lo
+      free(anterior);
+    }
+  }
+
+  if (atual == NULL) {
+    printf("Nó com o nome '%s' não encontrado.\n", nomeNo);
+    return;
+  }
+
+  if (atual == p->topo) {
+    p->topo = atual->prox;
+  } else if (anterior != NULL){
+    anterior->prox = atual->prox;
+  }
+  free(atual);
 }
 
 void imprimir_variavel(variavel var){
@@ -224,7 +303,20 @@ no* procurar_variavel_em_pilha(pilha* p, char* nome){
   return NULL;
 }
 
-variavel* criar_variavel(no *atual, char *nome, TipoVariavel tipo, void *valor){
+no* procurar_tipo_variavel(pilha *p, char* nome){
+  no* atual = p -> topo;
+  while(atual != NULL){
+    for (int i = 0; i < atual -> qtdVariaveis; i++){
+      if (strcmp(atual -> variavel[i].nome, nome) == 0){
+        return atual -> variavel[i].tipo_variavel;
+      }
+    }
+    atual = atual -> prox;
+  }
+  return NULL;
+}
+
+variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
   variavel *var = (variavel *)malloc(sizeof(variavel));
   if (!var) {
     printf("Falha ao realocar memória\n");
