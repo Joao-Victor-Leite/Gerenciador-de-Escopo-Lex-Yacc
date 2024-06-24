@@ -5,6 +5,11 @@ void yyerror(char* s);
 #include <stdio.h>
 #include <string.h>
 
+/* 
+VERIFICAR SE A LOGICA DA CRIACAO DOS NOS TA CERTA
+RESOLVER A AMBIGUIDADE DA GRAMATICA
+*/
+
 
 typedef struct Pilha{
     No* topo;
@@ -31,15 +36,15 @@ typedef struct Variavel {
   } valor;
 } variavel;
 
-void iniciar_pilha(pilha *);
-void empilhar(pilha *, variavel *s);
-variavel desempilhar(pilha* , char* );
-void imprimir_variavel(variavel);
-no* procurar_variavel_em_pilha(pilha *, char *);
-no* procurar_tipo_variavel_em_pilha(pilha*, char *);
-variavel* criar_variavel(Pilha *, char *, tipoVariavel, void *);
-%}
+void iniciar_pilha(pilha *p);
+void empilhar(pilha *p, char *nomeNo);
+variavel desempilhar(pilha* p, char* nomeNo);
+void imprimir_variavel(variavel var);
+no* procurar_variavel_em_pilha(pilha* p, char* nome);
+tipoVariavel procurar_tipo_variavel(pilha *p, char* nome);
+variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor);
 
+%}
 
 %token BLOCO_INICIO BLOCO_FIM
 %token TIPO_NUMERO TIPO_CADEIA
@@ -55,7 +60,7 @@ variavel* criar_variavel(Pilha *, char *, tipoVariavel, void *);
 
 %%
 entrada:
-  linha
+  linha    
   | entrada linha
   ;
 
@@ -71,7 +76,7 @@ linha:
 inicio_escopo:
   BLOCO_INICIO{
     printf("BLOCO_INICIO\n");
-    empilhar(p, NULL);
+    empilhar(p, $1);
   }
   ;
 
@@ -226,6 +231,8 @@ impressao:
 
 
 extern FILE *yyin;
+int encontrado = 0;
+
 int main() {
 	do { 
 		yyparse(); 
@@ -241,15 +248,16 @@ void iniciar_pilha(pilha *p) {
   p -> topo = NULL;
 }
 
-void empilhar(pilha *p, variavel *var) {
+void empilhar(pilha *p, char *nomeNo) {
   no *novo = (no *)malloc(sizeof(no));
-  if (novo_no == NULL) {
+  if (novo == NULL) {
     printf("Erro ao alocar memória.\n");
     exit(1);
   }
-  novo -> variavel = var;
-  novo -> prox = p -> topo;
-  p -> topo = novo;
+
+  novo->nome = strdup(nomeNo);
+  novo->prox = p->topo;
+  p->topo = novo;
 }
 
 variavel desempilhar(pilha* p, char* nomeNo){
@@ -264,7 +272,7 @@ variavel desempilhar(pilha* p, char* nomeNo){
   while (atual != NULL && strcmp(atual->variavel->nome, nomeNo) != 0) {
     anterior = atual;
     atual = atual->prox;
-    if (anterior != p->topo) { // Evita liberar o topo antes de atualizá-lo
+    if (anterior != p->topo) {
       free(anterior);
     }
   }
@@ -292,52 +300,54 @@ void imprimir_variavel(variavel var){
 
 no* procurar_variavel_em_pilha(pilha* p, char* nome){
   no* atual = p -> topo;
-  while (atual !- NULL){
-    for (int i = 0; i < atual -> qtdVariaveis; i++){
-      if (strcmp(atual -> variavel[i].nome, nome) == 0){
+  while (atual != NULL){
+    for (int i = 0; i < atual->qtdVariaveis; i++){
+      if (strcmp(atual->variavel[i].nome, nome) == 0){
         return atual;
       }
     }
-    atual = atual -> prox;
+    atual = atual->prox;
   }
   return NULL;
 }
 
-no* procurar_tipo_variavel(pilha *p, char* nome){
-  no* atual = p -> topo;
-  while(atual != NULL){
-    for (int i = 0; i < atual -> qtdVariaveis; i++){
-      if (strcmp(atual -> variavel[i].nome, nome) == 0){
-        return atual -> variavel[i].tipo_variavel;
+tipoVariavel procurar_tipo_variavel(pilha *p, char* nome) {
+  no* atual = p->topo;
+  encontrado = 0;
+  while (atual != NULL) {
+    for (int i = 0; i < atual->qtdVariaveis; i++) {
+      if (strcmp(atual->variavel[i].nome, nome) == 0) {
+        encontrado = 1;
+        return atual->variavel[i].tipo_variavel;
       }
     }
-    atual = atual -> prox;
+    atual = atual->prox;
   }
-  return NULL;
+  return (tipoVariavel)0;
 }
 
 variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
   variavel *var = (variavel *)malloc(sizeof(variavel));
   if (!var) {
-    printf("Falha ao realocar memória\n");
+    printf("Falha ao alocar memória\n");
     return NULL;
   }
   var->nome = strdup(nome);
   var->tipo_variavel = tipo;
 
-  if(var -> tipo_variavel == TIPO_NUMERO){
-    var -> valor.numero = *(int *)valor;
-  }else if (var -> tipo_variavel == TIPO_CADEIA){
-    var -> valor.cadeia = strdup((char *)valor);
+  if(var->tipo_variavel == TIPO_NUMERO){
+    var->valor.numero = *(int *)valor;
+  }else if (var->tipo_variavel == TIPO_CADEIA){
+    var->valor.cadeia = strdup((char *)valor);
   }
 
-  atual->variavel = realloc(atual->variavel, (atual->qtdVariaveis + 1) * sizeof(variavel));
+  atual->variavel = realloc(atual->variavel, (atual->qtdVariaveis + 1) * sizeof(variavel*));
   if (atual->variavel == NULL){
     printf("Falha ao realocar memória\n");
     free(var);
     return NULL;
   }
-  atual->variavel[atual->qtdVariaveis] = var;
+  atual->variavel[atual->qtdVariaveis] = *var;
   atual->qtdVariaveis++;
   return var;
 }
