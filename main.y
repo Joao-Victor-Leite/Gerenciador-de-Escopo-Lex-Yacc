@@ -37,7 +37,7 @@ typedef struct Pilha{
 
 void iniciar_pilha(pilha *p);
 void empilhar(pilha *p, char *nomeNo);
-variavel desempilhar(pilha* p, char* nomeNo);
+void desempilhar(pilha* p, char* nomeNo);
 void imprimir_variavel(variavel var);
 no* procurar_variavel_em_pilha(pilha* p, char* nome);
 tipoVariavel procurar_tipo_variavel_em_pilha(pilha *p, char* nome);
@@ -57,7 +57,7 @@ pilha* p;
 %union 
 {
 	int numero;
-  char *cadeia;
+  char* cadeia;
 }
 %%
 entrada:
@@ -204,15 +204,14 @@ expressao:
     tipo_1 = procurar_tipo_variavel_em_pilha(p, $1.cadeia);
     tipo_2 = procurar_tipo_variavel_em_pilha(p, $3.cadeia);
     if(tipo_1 == TIPO_NUMERO && tipo_2 == TIPO_NUMERO){
-      $$ = $1.numero + $3.numero;
+      $$.numero = $1.numero + $3.numero;
     }else if(tipo_1 == TIPO_CADEIA && tipo_2 == TIPO_CADEIA){
       char* nova_cadeia = malloc(strlen($1.cadeia) + strlen($3.cadeia) + 1);
       strcpy(nova_cadeia, $1.cadeia);
       strcat(nova_cadeia, $3.cadeia);
-      $$ = nova_cadeia;
+      $$.cadeia = nova_cadeia;
     }else{
       printf("Tipos incompativeis\n");
-      $$ = NULL;
     }
   }
   ;
@@ -225,10 +224,11 @@ termo:
 
 impressao:
   PRINT TK_IDENTIFICADOR {
-    no = procurar_variavel_em_pilha(p, $2.cadeia);
-    for (int i = 0; i < no -> qtdVariaveis; i++){
-      if(strcmp(no -> variavel[i].nome, $2.cadeia) == 0){
-        imprimir_variavel(no -> variavel[i]);
+    no* no_atual;
+    no_atual = procurar_variavel_em_pilha(p, $2.cadeia);
+    for (int i = 0; i < no_atual->qtdVariaveis; i++){
+      if(strcmp(no_atual->variavel[i].nome, $2.cadeia) == 0){
+        imprimir_variavel(no_atual -> variavel[i]);
       }
     }
   }
@@ -265,7 +265,7 @@ void empilhar(pilha *p, char *nomeNo) {
   p->topo = novo;
 }
 
-variavel desempilhar(pilha* p, char* nomeNo){
+void desempilhar(pilha* p, char* nomeNo){
   if (p -> topo == NULL){
     printf("Pilha vazia\n");
     return;
@@ -299,7 +299,7 @@ void imprimir_variavel(variavel var){
   if (var.tipo_variavel == TIPO_NUMERO){
     printf("%d\n", var.valor.numero);
   }else if (var.tipo_variavel == TIPO_CADEIA){
-    printf("%s\n", var.valor);
+    printf("%s\n", var.valor.cadeia);
   }
 }
 
@@ -352,7 +352,7 @@ variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
     free(var);
     return NULL;
   }
-  atual->variavel[atual->qtdVariaveis] = var;
+  atual->variavel[atual->qtdVariaveis] = *var;
   atual->qtdVariaveis++;
   return var;
 }
