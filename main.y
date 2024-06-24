@@ -45,18 +45,20 @@ tipoVariavel procurar_tipo_variavel(pilha *p, char* nome);
 variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor);
 
 %}
+%union 
+{
+	int numero;
+  char *cadeia;
+}
 
-%token BLOCO_INICIO BLOCO_FIM
+%token <cadeia> BLOCO_INICIO BLOCO_FIM 
 %token TIPO_NUMERO TIPO_CADEIA
 %token PRINT
 %token MAIS IGUAL
-%token TK_IDENTIFICADOR TK_NUMERO TK_CADEIA
+%token <cadeia> TK_IDENTIFICADOR 
+%token <cadeia> TK_CADEIA 
+%token <numero> TK_NUMERO
 
-%union 
-{
-	int number;
-  char *cadeia;
-}
 
 %%
 entrada:
@@ -163,7 +165,7 @@ atribuicao:
     if (no_atual != NULL){
       for (int i = 0; i < no_atual -> qtdVariaveis; i++){
         if (strcmp(no_atual -> variavel[i].nome, s1) == 0){
-          no_atual -> variavel[i].valor.cadeia = $3;
+          no_atual -> variavel[i].valor = $3;
         }
       }
     }
@@ -294,7 +296,7 @@ void imprimir_variavel(variavel var){
   if (var.tipo_variavel == TIPO_NUMERO){
     printf("%d\n", var.valor.numero);
   }else if (var.tipo_variavel == TIPO_CADEIA){
-    printf("%s\n", var.valor.cadeia);
+    printf("%s\n", var.valor);
   }
 }
 
@@ -338,7 +340,7 @@ variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
   if(var->tipo_variavel == TIPO_NUMERO){
     var->valor.numero = *(int *)valor;
   }else if (var->tipo_variavel == TIPO_CADEIA){
-    var->valor.cadeia = strdup((char *)valor);
+    var->valor = strdup((char *)valor);
   }
 
   atual->variavel = realloc(atual->variavel, (atual->qtdVariaveis + 1) * sizeof(variavel*));
@@ -347,7 +349,7 @@ variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
     free(var);
     return NULL;
   }
-  atual->variavel[atual->qtdVariaveis] = *var;
+  atual->variavel[atual->qtdVariaveis] = var;
   atual->qtdVariaveis++;
   return var;
 }
