@@ -12,6 +12,7 @@ typedef struct Pilha{
 
 typedef struct No {
     variavel variavel;
+    int qtdVariaveis;
     struct No* prox;
 } no;
 
@@ -22,7 +23,6 @@ typedef enum {
 
 typedef struct Variavel {
   TipoVariavel tipo_variavel;
-  char *tipo;
   char *nome;
   union {
     int numero;
@@ -30,14 +30,17 @@ typedef struct Variavel {
   } valor;
 } variavel;
 
-
 void iniciar_pilha(pilha *);
 void empilhar(pilha *, variavel *s);
 pilha* desempilhar(pilha *);
+
 variavel* desempilhar(pilha *);
+variavel* criar_variavel(Pilha *, char *, TipoVariavel, void *);
 void imprimir_variavel(variavel);
+
 no* procurar_variavel_em_pilha(pilha *, char *);
 no* procurar_tipo_variavel_em_pilha(pilha*, char *);
+
 
 %}
 
@@ -49,6 +52,11 @@ no* procurar_tipo_variavel_em_pilha(pilha*, char *);
 
 
 %%
+entrada:}
+  linha
+  | entrada linha
+  ;
+
 linha:
   inicio_escopo
   | fim_escopo
@@ -60,14 +68,12 @@ linha:
 
 inicio_escopo:
   BLOCO_INICIO{
-    printf("BLOCO_INICIO\n");
-    push(p);
+    printf("BLOCO_INICIO\n"); 
   }
 
 fim_escopo:
   BLOCO_FIM{
     printf("BLOCO_FIM\n");
-    a = pop(p);
   }
 
 declaracao:
@@ -80,16 +86,18 @@ declaracao:
 declaracao_cadeia:
   TK_IDENTIFICADOR IGUAL TK_CADEIA {
     char *s1 = $1;
-    if (procurar_variavel_em_pilha() == NULL) {
-      /* funcao para adicionar a variavel do tipo CADEIA naquele escopo ("CADEIA", s1, $3.string) */
+    no = procurar_variavel_em_pilha(p, s1);
+    if (no == NULL) {
+      criar_variavel(no, s1, TIPO_CADEIA, $3);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
   | TK_IDENTIFICADOR {
     char *s1 = $1;
-    if (procurar_variavel_em_pilha() != NULL){
-      /* funcao para adicionar a variavel do tipo CADEIA naquele escopo ("CADEIA", s1, "") */
+    no = procurar_variavel_em_pilha(p, s1);
+    if (no == NULL) {
+      criar_variavel(no, s1, TIPO_CADEIA, "");
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
@@ -98,16 +106,18 @@ declaracao_cadeia:
 declaracao_numero:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
     char *s1 = $1;
-    if (procurar_variavel_em_pilha() == NULL){
-      /* funcao para adicionar a variavel do tipo NUMERO naquele escopo ("NUMERO", s1, $3.numero) */
+    no = procurar_variavel_em_pilha(p, s1);
+    if (no == NULL) {
+      criar_variavel(no, s1, TIPO_NUMERO, $3);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
   | TK_NUMERO {
     char *s1 = $1;
-    if (procurar_variavel_em_pilha() == NULL){
-      /* funcao para adicionar a variavel do tipo NUMERO naquele escopo ("NUMERO", s1, 0) */
+    no = procurar_variavel_em_pilha(p, s1);
+    if (no == NULL) {
+      criar_variavel(no, s1, TIPO_NUMERO, 0);
     }else{
       printf("Variavel '%s' ja declarada\n", s1);
     }
@@ -138,12 +148,18 @@ expressao:
 
 termo:
   TK_NUMERO
+  | TK_CADEIA
   | TK_IDENTIFICADOR
   ;
 
 impressao:
   PRINT TK_IDENTIFICADOR {
-    imprimir_variavel());
+    no = procurar_variavel_em_pilha(p, $2);
+    for (int i = 0; i < no -> qtdVariaveis; i++){
+      if(strcmp(no -> variavel[i].nome, $2) == 0){
+        imprimir_variavel(no -> variavel[i]);
+      }
+    }
   }
 %%
 
@@ -187,12 +203,49 @@ variavel desempilhar(pilha* p){
   return var;
 }
 
-/* FALTA TERMINAR ESSA */
 void imprimir_variavel(variavel var){
   if (var.tipo_variavel == TIPO_NUMERO){
     printf("%d\n", var.valor.numero);
-  }else{
+  }else if (var.tipo_variavel == TIPO_CADEIA){
     printf("%s\n", var.valor.cadeia);
   }
 }
 
+no* procurar_variavel_em_pilha(pilha* p, char* nome){
+  no* atual = p -> topo;
+  while (atual !- NULL){
+    for (int i = 0; i < atual -> qtdVariaveis; i++){
+      if (strcmp(atual -> variavel[i].nome, nome) == 0){
+        return atual;
+      }
+    }
+    atual = atual -> prox;
+  }
+  return NULL;
+}
+
+variavel* criar_variavel(no *atual, char *nome, TipoVariavel tipo, void *valor){
+  variavel *var = (variavel *)malloc(sizeof(variavel));
+  if (!var) {
+    printf("Falha ao realocar memória\n");
+    return NULL;
+  }
+  var->nome = strdup(nome);
+  var->tipo_variavel = tipo;
+
+  if(var -> tipo_variavel == TIPO_NUMERO){
+    var -> valor.numero = *(int *)valor;
+  }else if (var -> tipo_variavel == TIPO_CADEIA){
+    var -> valor.cadeia = strdup((char *)valor);
+  }
+
+  atual->variavel = realloc(atual->variavel, (atual->qtdVariaveis + 1) * sizeof(variavel));
+  if (atual->variavel == NULL){
+    printf("Falha ao realocar memória\n");
+    free(var);
+    return NULL;
+  }
+  atual->variavel[atual->qtdVariaveis] = var;
+  atual->qtdVariaveis++;
+  return var;
+}
