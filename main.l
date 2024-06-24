@@ -10,9 +10,9 @@
 [ \t]*NUMERO[ \t]*                      {return TIPO_NUMERO;}
 [ \t]*CADEIA[ \t]*                      {return TIPO_CADEIA;}
 [ \t]*PRINT[ \t]*                       {return PRINT;}
-[ \t]*[0-9]+[ \t]*                      {yylval.number = atoi(yytext); return TK_NUMERO;}
-[ \t]*[a-z][a-zA-Z0-9_]*[ \t]*          {yylval.string = strdup(yytext); return TK_IDENTIFICADOR}
-[ \t]*\"[^\"]*\"[ \t]*                  {yylval.string = strdup(yytext); return TK_CADEIA;}
+[ \t]*[0-9]+[ \t]*                      {yylval.numero = atoi(yytext); return TK_NUMERO;}
+[ \t]*[a-z][a-zA-Z0-9_]*[ \t]*          {return TK_IDENTIFICADOR;}
+[ \t]*\"[^\"]*\"[ \t]*                  {yylval.cadeia = strdup(yytext); return TK_CADEIA;}
 \+                                      {return MAIS;}
 \-                                      {return '-';}
 =                                       {return IGUAL;}
