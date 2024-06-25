@@ -5,10 +5,6 @@ void yyerror(char* s);
 #include <stdio.h>
 #include <string.h>
 
-/* 
-VERIFICAR SE A LOGICA DA CRIACAO DOS NOS TA CERTA
-RESOLVER A AMBIGUIDADE DA GRAMATICA
-*/
 
 typedef enum {
   TIPO_NUMERO,
@@ -39,6 +35,7 @@ void iniciar_pilha(pilha *p);
 void empilhar(pilha *p, char *nomeNo);
 void desempilhar(pilha* p, char* nomeNo);
 void imprimir_variavel(variavel var);
+void remover_espacos(char *str);
 no* procurar_variavel_em_pilha(pilha* p, char* nome);
 tipoVariavel procurar_tipo_variavel_em_pilha(pilha *p, char* nome);
 variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor);
@@ -61,12 +58,14 @@ pilha* p;
 }
 %%
 entrada:
-  linha    
+  linha
   | entrada linha
   ;
 
 linha:
-  inicio_escopo
+  {
+    remover_espacos($$.cadeia);
+  }inicio_escopo
   | fim_escopo
   | declaracao  ';'
   | atribuicao  ';'
@@ -301,6 +300,17 @@ void imprimir_variavel(variavel var){
   }else if (var.tipo_variavel == TIPO_CADEIA){
     printf("%s\n", var.valor.cadeia);
   }
+}
+
+void remover_espacos(char *str) {
+    char *dest = str;
+    while (*str != '\0') {
+        if (*str != ' ') {
+            *dest++ = *str;
+        }
+        str++;
+    }
+    *dest = '\0';
 }
 
 no* procurar_variavel_em_pilha(pilha* p, char* nome){
