@@ -94,21 +94,22 @@ declaracao:
 
 declaracao_cadeia:
   TK_IDENTIFICADOR IGUAL TK_CADEIA {
-    char *s1 = $1.cadeia;
-    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    remover_espacos($1.cadeia);
+    no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
-      criar_variavel(no_atual, s1, TIPO_CADEIA, $3.cadeia);
+      criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, $3.cadeia);
     }else{
-      printf("Variavel '%s' ja declarada\n", s1);
+      printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
   | TK_IDENTIFICADOR {
-    char *s1 = $1.cadeia;
-    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    remover_espacos($1.cadeia);
+    printf("cheguei aqui");
+    no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
-      criar_variavel(no_atual, s1, TIPO_CADEIA, "");
+      criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, "");
     }else{
-      printf("Variavel '%s' ja declarada\n", s1);
+      printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
   ;
@@ -247,23 +248,47 @@ void yyerror(char *s) {
 
 /* FUNCIONANDO */
 void iniciar_pilha() {
-    p = (pilha *)malloc(sizeof(pilha));
-    if (p != NULL) {
-        p->topo = NULL;
-    }
+  printf("Iniciando pilha\n");
+  p = (pilha *)malloc(sizeof(pilha));
+  if (p != NULL) {
+      p->topo = NULL;
+  }
+  printf("Pilha iniciada\n");
 }
 
 /* FUNCIONANDO */
 void empilhar(char *nomeNo) {
+  printf("Empilhando %s\n", nomeNo);
   no *novo = (no *)malloc(sizeof(no));
   if (novo == NULL) {
     printf("Erro ao alocar memória.\n");
     exit(1);
   }
 
-  novo->nome = strdup(nomeNo);
+  char *inicio = strchr(nomeNo, '_');
+  char *fim = strrchr(nomeNo, '_');
+  if (inicio != NULL && fim != NULL && fim > inicio) {
+    // Mantendo os underlines, então não adicionamos 1 ao início nem subtraímos 1 do tamanho
+    size_t tamanho = fim - inicio + 1; // +1 para incluir o último '_'
+    char *nomeExtraido = (char *)malloc(tamanho + 1); // +1 para o '\0'
+    if (nomeExtraido) {
+      strncpy(nomeExtraido, inicio, tamanho);
+      nomeExtraido[tamanho] = '\0'; // Garantindo que a string é terminada corretamente
+      novo->nome = nomeExtraido;
+    } else {
+      printf("Erro ao alocar memória para o nome.\n");
+      free(novo);
+      exit(1);
+    }
+  } else {
+    // Se não encontrar os '_', use o nomeNo como fallback
+    novo->nome = strdup(nomeNo);
+  }
+
+  // Supondo que a estrutura de pilha e a lógica de empilhamento já existam
   novo->prox = p->topo;
   p->topo = novo;
+  printf("No %s empilhado\n", novo->nome);
 }
 
 void desempilhar(pilha* p, char* nomeNo){
@@ -344,24 +369,42 @@ tipoVariavel procurar_tipo_variavel_em_pilha(pilha *p, char* nome) {
   return (tipoVariavel)0;
 }
 
+/* ESTA QUEBRANDO AQUI */
 variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
+  printf("asdasdad");
   variavel *var = (variavel *)malloc(sizeof(variavel));
   if (!var) {
     printf("Falha ao alocar memória\n");
     return NULL;
   }
   var->nome = strdup(nome);
+  if (!var->nome) {
+    printf("Falha ao alocar memória para o nome\n");
+    free(var);
+    return NULL;
+  }
+
   var->tipo_variavel = tipo;
 
   if(var->tipo_variavel == TIPO_NUMERO){
     var->valor.numero = *(int *)valor;
   }else if (var->tipo_variavel == TIPO_CADEIA){
     var->valor.cadeia = strdup((char *)valor);
+    if (!var->valor.cadeia) {
+      printf("Falha ao alocar memória para a cadeia\n");
+      free(var->nome);
+      free(var);
+      return NULL;
+    }
   }
 
   atual->variavel = realloc(atual->variavel, (atual->qtdVariaveis + 1) * sizeof(variavel*));
-  if (atual->variavel == NULL){
+  if (!atual->variavel) {
     printf("Falha ao realocar memória\n");
+    if (var->tipo_variavel == TIPO_CADEIA) {
+      free(var->valor.cadeia);
+    }
+    free(var->nome);
     free(var);
     return NULL;
   }
