@@ -31,8 +31,8 @@ typedef struct Pilha{
     no* topo;
 } pilha;
 
-void iniciar_pilha(pilha *p);
-void empilhar(pilha *p, char *nomeNo);
+void iniciar_pilha();
+void empilhar(char *nomeNo);
 void desempilhar(pilha* p, char* nomeNo);
 void imprimir_variavel(variavel var);
 void remover_espacos(char *str);
@@ -63,9 +63,7 @@ entrada:
   ;
 
 linha:
-  {
-    remover_espacos($$.cadeia);
-  }inicio_escopo
+  inicio_escopo
   | fim_escopo
   | declaracao  ';'
   | atribuicao  ';'
@@ -75,8 +73,8 @@ linha:
 
 inicio_escopo:
   BLOCO_INICIO{
-    printf("BLOCO_INICIO\n");
-    empilhar(p, $1.cadeia);
+    remover_espacos($1.cadeia);
+    empilhar($1.cadeia);
   }
   ;
 
@@ -237,7 +235,7 @@ impressao:
 
 extern FILE *yyin;
 int main() {
-  iniciar_pilha(p);
+  iniciar_pilha();
 	do { 
 		yyparse(); 
 	} while (!feof(yyin));
@@ -247,12 +245,16 @@ void yyerror(char *s) {
    fprintf(stderr, "erro: %s\n", s);
 }
 
-void iniciar_pilha(pilha *p) {
-  p = (pilha *)malloc(sizeof(pilha));
-  p -> topo = NULL;
+/* FUNCIONANDO */
+void iniciar_pilha() {
+    p = (pilha *)malloc(sizeof(pilha));
+    if (p != NULL) {
+        p->topo = NULL;
+    }
 }
 
-void empilhar(pilha *p, char *nomeNo) {
+/* FUNCIONANDO */
+void empilhar(char *nomeNo) {
   no *novo = (no *)malloc(sizeof(no));
   if (novo == NULL) {
     printf("Erro ao alocar memória.\n");
@@ -302,15 +304,16 @@ void imprimir_variavel(variavel var){
   }
 }
 
-void remover_espacos(char *str) {
-    char *dest = str;
-    while (*str != '\0') {
-        if (*str != ' ') {
-            *dest++ = *str;
-        }
-        str++;
-    }
-    *dest = '\0';
+/* FUNCIONANDO */
+void remover_espacos(char *str) { 
+  char *dest = str; 
+  while (*str != '\0') { 
+    if (*str != ' ') { 
+      *dest++ = *str; 
+    } 
+    str++; 
+  } 
+  *dest = '\0'; 
 }
 
 no* procurar_variavel_em_pilha(pilha* p, char* nome){
