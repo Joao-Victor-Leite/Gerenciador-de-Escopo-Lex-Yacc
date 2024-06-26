@@ -33,7 +33,7 @@ typedef struct Pilha{
 
 void iniciar_pilha();
 void empilhar(char *nomeNo);
-void desempilhar(pilha* p, char* nomeNo);
+void desempilhar(char* nomeNo);
 void imprimir_variavel(variavel var);
 void remover_espacos(char *str);
 no* procurar_variavel_em_pilha(pilha* p, char* nome);
@@ -80,8 +80,8 @@ inicio_escopo:
 
 fim_escopo:
   BLOCO_FIM{
-    printf("BLOCO_FIM\n");
-    desempilhar(p, $1.cadeia);
+    remover_espacos($1.cadeia);
+    desempilhar($1.cadeia);
   }
   ;
 
@@ -291,34 +291,55 @@ void empilhar(char *nomeNo) {
   printf("No %s empilhado\n", novo->nome);
 }
 
-void desempilhar(pilha* p, char* nomeNo){
+void desempilhar(char* nomeNo){
+  printf("Desempilhando %s\n", nomeNo);
   if (p -> topo == NULL){
     printf("Pilha vazia\n");
     return;
   }
 
-  no* atual = p -> topo;
-  no* anterior = NULL;
+  char *nomeParaComparar = nomeNo;
+  char *nomeExtraido = NULL;
 
-  while (atual != NULL && strcmp(atual->variavel->nome, nomeNo) != 0) {
-    anterior = atual;
-    atual = atual->prox;
-    if (anterior != p->topo) {
-      free(anterior);
+  char *inicio = strchr(nomeNo, '_');
+  char *fim = strrchr(nomeNo, '_');
+  if (inicio != NULL && fim != NULL && fim > inicio) {
+    size_t tamanho = fim - inicio + 1;
+    nomeExtraido = (char *)malloc(tamanho + 1);
+    if (nomeExtraido) {
+      strncpy(nomeExtraido, inicio, tamanho);
+      nomeExtraido[tamanho] = '\0';
+      nomeParaComparar = nomeExtraido;
+    } else {
+      printf("Erro ao alocar memória para o nome.\n");
+      exit(1);
     }
   }
 
-  if (atual == NULL) {
-    printf("Nó com o nome '%s' não encontrado.\n", nomeNo);
-    return;
+  no* atual = p -> topo;
+  no* anterior = NULL;
+
+  while (atual != NULL && strcmp(atual->variavel->nome, nomeParaComparar) != 0) {
+    anterior = atual;
+    atual = atual->prox;
   }
 
-  if (atual == p->topo) {
-    p->topo = atual->prox;
-  } else if (anterior != NULL){
-    anterior->prox = atual->prox;
+  if (atual == NULL) {
+    printf("Nó com o nome '%s' não encontrado.\n", nomeParaComparar);
+  } else {
+    if (atual == p->topo) {
+      p->topo = atual->prox;
+    } else if (anterior != NULL) {
+      anterior->prox = atual->prox;
+    }
+    free(atual);
   }
-  free(atual);
+
+  if (nomeExtraido) {
+    free(nomeExtraido);
+  }
+  
+  printf("Desempilhando %s\n", nomeNo);
 }
 
 void imprimir_variavel(variavel var){
