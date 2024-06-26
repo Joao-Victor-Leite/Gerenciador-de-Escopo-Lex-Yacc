@@ -105,7 +105,6 @@ declaracao_cadeia:
   }
   | TK_IDENTIFICADOR {
     remover_espacos($1.cadeia);
-    printf("cheguei aqui");
     no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
       criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, "");
@@ -127,13 +126,13 @@ declaracao_numero:
       printf("Variavel '%s' ja declarada\n", s1);
     }
   }
-  | TK_NUMERO {
-    char *s1 = $1.cadeia;
-    no* no_atual = procurar_variavel_em_pilha(p, s1);
+  | TK_IDENTIFICADOR {
+    remover_espacos($1.cadeia);
+    no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
-      criar_variavel(no_atual, s1, TIPO_NUMERO, 0);
+      criar_variavel(no_atual, $1.cadeia, TIPO_NUMERO, 0);
     }else{
-      printf("Variavel '%s' ja declarada\n", s1);
+      printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
   ;
@@ -331,7 +330,7 @@ void desempilhar(char* nomeNo){
       }
       free(atual->nome);
       free(atual);
-      printf("Desempilhado '%s'.\n", nomeExtraido);
+      printf("Desempilhado %s\n", nomeExtraido);
       /* imprimir_pilha(); */
       return;
     }
@@ -400,7 +399,6 @@ tipoVariavel procurar_tipo_variavel_em_pilha(pilha *p, char* nome) {
 
 /* ESTA QUEBRANDO AQUI */
 variavel* criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor){
-  printf("asdasdad");
   variavel *var = (variavel *)malloc(sizeof(variavel));
   if (!var) {
     printf("Falha ao alocar memória\n");
