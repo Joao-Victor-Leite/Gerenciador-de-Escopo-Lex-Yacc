@@ -5,8 +5,8 @@
 %}
 
 %% 
-[ \t]*BLOCO[ \t]*_[a-zA-Z]+_            {yylval.cadeia = strdup(yytext); return BLOCO_INICIO;}
-[ \t]*FIM[ \t]*_[a-zA-Z]+_              {return BLOCO_FIM;}
+[ \t]*BLOCO[ \t]*_[a-zA-Z0-9]+_         {yylval.cadeia = strdup(yytext); return BLOCO_INICIO;}
+[ \t]*FIM[ \t]*_[a-zA-Z0-9]+_           {yylval.cadeia = strdup(yytext);return BLOCO_FIM;}
 [ \t]*NUMERO[ \t]*                      {return TIPO_NUMERO;}
 [ \t]*CADEIA[ \t]*                      {return TIPO_CADEIA;}
 [ \t]*PRINT[ \t]*                       {return PRINT;}
