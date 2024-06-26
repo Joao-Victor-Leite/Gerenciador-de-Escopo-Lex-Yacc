@@ -13,10 +13,9 @@
 [ \t]*[0-9]+[ \t]*                      {yylval.numero = atoi(yytext); return TK_NUMERO;}
 [ \t]*[a-z][a-zA-Z0-9_]*[ \t]*          {yylval.cadeia = strdup(yytext); return TK_IDENTIFICADOR;}
 [ \t]*\"[^\"]*\"[ \t]*                  {yylval.cadeia = strdup(yytext); return TK_CADEIA;}
-\+                                      {return MAIS;}
-\-                                      {return '-';}
-=                                       {return IGUAL;}
-;                                       {return ';';}
-,                                       {return ',';}
+"+"                                     {return MAIS;}
+"="                                     {return IGUAL;}
+";"                                     {return ';';}
+","                                     {return ',';}
 [ \t]+                                  {/* ignorar espaços em branco */}
 %%
