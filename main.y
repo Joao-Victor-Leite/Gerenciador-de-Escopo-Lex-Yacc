@@ -34,6 +34,7 @@ typedef struct Pilha{
 void iniciar_pilha();
 void empilhar(char *nomeNo);
 void desempilhar(char* nomeNo);
+void imprimir_pilha();
 void imprimir_variavel(variavel var);
 void remover_espacos(char *str);
 no* procurar_variavel_em_pilha(pilha* p, char* nome);
@@ -265,15 +266,17 @@ void empilhar(char *nomeNo) {
     exit(1);
   }
 
+  char *nomeExtraido = NULL;
   char *inicio = strchr(nomeNo, '_');
   char *fim = strrchr(nomeNo, '_');
+
   if (inicio != NULL && fim != NULL && fim > inicio) {
-    // Mantendo os underlines, então não adicionamos 1 ao início nem subtraímos 1 do tamanho
-    size_t tamanho = fim - inicio + 1; // +1 para incluir o último '_'
-    char *nomeExtraido = (char *)malloc(tamanho + 1); // +1 para o '\0'
+    size_t tamanho = fim - inicio + 1; 
+    nomeExtraido = (char *)malloc(tamanho + 1);
+
     if (nomeExtraido) {
       strncpy(nomeExtraido, inicio, tamanho);
-      nomeExtraido[tamanho] = '\0'; // Garantindo que a string é terminada corretamente
+      nomeExtraido[tamanho] = '\0';
       novo->nome = nomeExtraido;
     } else {
       printf("Erro ao alocar memória para o nome.\n");
@@ -281,65 +284,70 @@ void empilhar(char *nomeNo) {
       exit(1);
     }
   } else {
-    // Se não encontrar os '_', use o nomeNo como fallback
     novo->nome = strdup(nomeNo);
   }
 
-  // Supondo que a estrutura de pilha e a lógica de empilhamento já existam
   novo->prox = p->topo;
+  novo->qtdVariaveis = 0;
   p->topo = novo;
   printf("No %s empilhado\n", novo->nome);
+  /* imprimir_pilha(); */
 }
 
+/* FUNCIONANDO */
 void desempilhar(char* nomeNo){
-  printf("Desempilhando %s\n", nomeNo);
   if (p -> topo == NULL){
     printf("Pilha vazia\n");
     return;
   }
 
-  char *nomeParaComparar = nomeNo;
   char *nomeExtraido = NULL;
-
   char *inicio = strchr(nomeNo, '_');
   char *fim = strrchr(nomeNo, '_');
+
   if (inicio != NULL && fim != NULL && fim > inicio) {
     size_t tamanho = fim - inicio + 1;
     nomeExtraido = (char *)malloc(tamanho + 1);
+
     if (nomeExtraido) {
       strncpy(nomeExtraido, inicio, tamanho);
       nomeExtraido[tamanho] = '\0';
-      nomeParaComparar = nomeExtraido;
+      printf("Desempilhando %s\n", nomeExtraido);
     } else {
       printf("Erro ao alocar memória para o nome.\n");
       exit(1);
     }
   }
 
-  no* atual = p -> topo;
+  no* atual = p->topo;
   no* anterior = NULL;
 
-  while (atual != NULL && strcmp(atual->variavel->nome, nomeParaComparar) != 0) {
+  while (atual != NULL) {
+    if (strcmp(atual->nome, nomeExtraido) == 0) {
+      if (anterior == NULL) {
+        p->topo = atual->prox;
+      } else {
+        anterior->prox = atual->prox;
+      }
+      free(atual->nome);
+      free(atual);
+      printf("Desempilhado '%s'.\n", nomeExtraido);
+      /* imprimir_pilha(); */
+      return;
+    }
     anterior = atual;
     atual = atual->prox;
   }
 
-  if (atual == NULL) {
-    printf("Nó com o nome '%s' não encontrado.\n", nomeParaComparar);
-  } else {
-    if (atual == p->topo) {
-      p->topo = atual->prox;
-    } else if (anterior != NULL) {
-      anterior->prox = atual->prox;
-    }
-    free(atual);
-  }
+  printf("Nó '%s' não encontrado.\n", nomeNo);
+}
 
-  if (nomeExtraido) {
-    free(nomeExtraido);
+void imprimir_pilha(){
+  no *atual = p->topo;
+  while (atual != NULL) {
+      printf("%s\n", atual->nome);
+      atual = atual->prox;
   }
-  
-  printf("Desempilhando %s\n", nomeNo);
 }
 
 void imprimir_variavel(variavel var){
