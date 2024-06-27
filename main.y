@@ -60,7 +60,7 @@ pilha* p;
 %%
 entrada:
   linha
-  | entrada linha
+  | linha entrada
   ;
 
 linha:
@@ -86,11 +86,20 @@ fim_escopo:
   }
   ;
 
+/* DANDO ERRO AQUI */
 declaracao:
-  TIPO_CADEIA declaracao_cadeia
-  | TIPO_CADEIA declaracao_multipla_cadeia
-  | TIPO_NUMERO declaracao_numero
+  TIPO_CADEIA declaracao_multipla_cadeia
   | TIPO_NUMERO declaracao_multipla_numero
+  ;
+
+declaracao_multipla_cadeia:
+  declaracao_cadeia
+  | declaracao_multipla_cadeia ',' declaracao_cadeia
+  ;
+
+declaracao_multipla_numero:
+  declaracao_numero
+  | declaracao_multipla_numero ',' declaracao_numero
   ;
 
 declaracao_cadeia:
@@ -116,35 +125,27 @@ declaracao_cadeia:
 
 declaracao_numero:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
-    char *s1 = $1.cadeia;
-    no* no_atual = procurar_variavel_em_pilha(p, s1);
+    remover_espacos($1.cadeia);
+    no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
       int* valor = (int*)malloc(sizeof(int));
       *valor = $3.numero;
-      criar_variavel(no_atual, s1, TIPO_NUMERO, valor);
+      criar_variavel(no_atual, $1.cadeia, TIPO_NUMERO, valor);
     }else{
-      printf("Variavel '%s' ja declarada\n", s1);
+      printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
   | TK_IDENTIFICADOR {
     remover_espacos($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha(p, $1.cadeia);
     if (no_atual == NULL) {
+      int* valor = (int*)malloc(sizeof(int));
+      *valor = 0;
       criar_variavel(no_atual, $1.cadeia, TIPO_NUMERO, 0);
     }else{
       printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
-  ;
-
-declaracao_multipla_cadeia:
-  declaracao_cadeia
-  | declaracao_multipla_cadeia ',' declaracao_cadeia
-  ;
-
-declaracao_multipla_numero:
-  declaracao_numero
-  | declaracao_multipla_numero ',' declaracao_numero
   ;
 
 atribuicao:
