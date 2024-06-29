@@ -298,10 +298,67 @@ declaracao_numero:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR {
-    
+    remover_espacos($1.cadeia);
+    remover_espacos($5.cadeia);
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($5.cadeia);
+    if (no_atual1 == NULL && no_atual2 != NULL) {
+      no_atual1 = p->topo;
+      tipoVariavel tipo2;
+      tipo2 = procurar_tipo_variavel_em_pilha($5.cadeia);
+      if (tipo2 == TIPO_NUMERO) {
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = $3.numero + no_atual2->variavel[0]->valor.numero;
+        criar_variavel(no_atual1, $1.cadeia, TIPO_NUMERO, valor);
+      }
+    }
   }
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
+    if (no_atual1 == NULL && no_atual2 != NULL) {
+      no_atual1 = p->topo;
+      tipoVariavel tipo2;
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      if (tipo2 == TIPO_NUMERO) {
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = no_atual2->variavel[0]->valor.numero + $5.numero;
+        criar_variavel(no_atual1, $1.cadeia, TIPO_NUMERO, valor);
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
+    no* no_atual3 = procurar_variavel_em_pilha($5.cadeia);
+
+    if (no_atual1 == NULL && no_atual2 != NULL && no_atual3 != NULL) {
+      no_atual1 = p->topo;
+      tipoVariavel tipo2, tipo3;
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      tipo3 = procurar_tipo_variavel_em_pilha($5.cadeia);
+
+      if (tipo2 == TIPO_NUMERO && tipo3 == TIPO_NUMERO) {
+        int* valor = (int*)malloc(sizeof(int));
+        for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
+          if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
+            for (int j = 0; j < no_atual3->qtdVariaveis; j++) {
+              if (strcmp(no_atual3->variavel[j]->nome, $5.cadeia) == 0) {
+                *valor = no_atual2->variavel[i]->valor.numero + no_atual3->variavel[j]->valor.numero;
+                criar_variavel(no_atual1, $1.cadeia, TIPO_NUMERO, valor);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   ;
 
 atribuicao:
