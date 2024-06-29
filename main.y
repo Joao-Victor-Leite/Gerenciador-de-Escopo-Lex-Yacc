@@ -204,32 +204,138 @@ atribuicao:
       }
     }
   }
-  | TK_IDENTIFICADOR IGUAL expressao
-  ;
-
-expressao:
-  termo
-  | expressao MAIS termo {
-    tipoVariavel tipo_1, tipo_2;
-    tipo_1 = procurar_tipo_variavel_em_pilha($1.cadeia);
-    tipo_2 = procurar_tipo_variavel_em_pilha($3.cadeia);
-    if(tipo_1 == TIPO_NUMERO && tipo_2 == TIPO_NUMERO){
-      $$.numero = $1.numero + $3.numero;
-    }else if(tipo_1 == TIPO_CADEIA && tipo_2 == TIPO_CADEIA){
-      char* nova_cadeia = malloc(strlen($1.cadeia) + strlen($3.cadeia) + 1);
-      strcpy(nova_cadeia, $1.cadeia);
-      strcat(nova_cadeia, $3.cadeia);
-      $$.cadeia = nova_cadeia;
-    }else{
-      printf("Tipos incompativeis\n");
+  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_NUMERO {
+    remover_espacos($1.cadeia);
+    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
+    if (no_atual != NULL){
+      tipoVariavel tipo = procurar_tipo_variavel_em_pilha($1.cadeia);
+      if (tipo == TIPO_NUMERO){
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = $3.numero + $5.numero;
+        for (int i = 0; i < no_atual->qtdVariaveis; i++){
+          if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
+            no_atual->variavel[i]->valor.numero = *valor;
+          }
+        }
+      }else{
+        printf("Operacao invalida\n");
+      }
     }
   }
-  ;
+  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR{
+    remover_espacos($1.cadeia);
+    remover_espacos($5.cadeia);
+    no* no_atual_1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual_2 = procurar_variavel_em_pilha($5.cadeia);
+    if (no_atual_1 != NULL && no_atual_2 != NULL){
+      tipoVariavel tipo_1, tipo_2;
+      tipo_1 = procurar_tipo_variavel_em_pilha($1.cadeia);
+      tipo_2 = procurar_tipo_variavel_em_pilha($5.cadeia);
+      if (tipo_1 == TIPO_NUMERO && tipo_2 == TIPO_NUMERO){
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = $3.numero + no_atual_2->variavel[0]->valor.numero;
+        for (int i = 0; i < no_atual_1->qtdVariaveis; i++){
+          if (strcmp(no_atual_1->variavel[i]->nome, $1.cadeia) == 0){
+            no_atual_1->variavel[i]->valor.numero = *valor;
+          }
+        }
+      }else{
+        printf("Operacao invalida\n");
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO{
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    no* no_atual_1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual_2 = procurar_variavel_em_pilha($3.cadeia);
+    if (no_atual_1 != NULL && no_atual_2 != NULL){
+      tipoVariavel tipo_1, tipo_2;
+      tipo_1 = procurar_tipo_variavel_em_pilha($1.cadeia);
+      tipo_2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      if (tipo_1 == TIPO_NUMERO && tipo_2 == TIPO_NUMERO){
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = no_atual_1->variavel[0]->valor.numero + $5.numero;
+        for (int i = 0; i < no_atual_1->qtdVariaveis; i++){
+          if (strcmp(no_atual_1->variavel[i]->nome, $1.cadeia) == 0){
+            no_atual_1->variavel[i]->valor.numero = *valor;
+          }
+        }
+      }else{
+        printf("Operacao invalida\n");
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
 
-termo:
-  TK_NUMERO
-  | TK_CADEIA
-  | TK_IDENTIFICADOR
+    int tamanho3 = strlen($3.cadeia);
+    if ($3.cadeia[tamanho3 - 1] == '\"') {
+      $3.cadeia[tamanho3 - 1] = '\0';
+    }
+
+    char* cadeia5Ajustada = $5.cadeia;
+    if (cadeia5Ajustada[0] == '\"') {
+      cadeia5Ajustada++;
+    }
+
+    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
+    if (no_atual != NULL) {
+      tipoVariavel tipo = procurar_tipo_variavel_em_pilha($1.cadeia);
+      if (tipo == TIPO_CADEIA) {
+        char* valor = (char*)malloc(strlen($3.cadeia) + strlen(cadeia5Ajustada) + 1);
+        strcpy(valor, $3.cadeia);
+        strcat(valor, cadeia5Ajustada);
+        for (int i = 0; i < no_atual->qtdVariaveis; i++) {
+          if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0) {
+            no_atual->variavel[i]->valor.cadeia = valor;
+          }
+        }
+      } else {
+        printf("Operacao invalida\n");
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    int tamanho3 = strlen($3.cadeia);
+    if ($3.cadeia[tamanho3 - 1] == '\"') {
+      $3.cadeia[tamanho3 - 1] = '\0';
+    }
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($5.cadeia);
+
+    if (no_atual1 != NULL && no_atual2 != NULL) {
+      tipoVariavel tipo1, tipo2;
+      tipo1 = procurar_tipo_variavel_em_pilha($1.cadeia);
+      tipo2 = procurar_tipo_variavel_em_pilha($5.cadeia);
+      if (tipo1 == TIPO_CADEIA && tipo2 == TIPO_CADEIA) {
+        char* valor5Ajustado = no_atual2->variavel[0]->valor.cadeia;
+        if (valor5Ajustado[1] == '\"') {
+          valor5Ajustado += 2;
+        }
+
+        char* valor = (char*)malloc(strlen($3.cadeia) + strlen(valor5Ajustado) + 1);
+        strcpy(valor, $3.cadeia);
+        strcat(valor, valor5Ajustado);
+        for (int i = 0; i < no_atual1->qtdVariaveis; i++) {
+          if (strcmp(no_atual1->variavel[i]->nome, $1.cadeia) == 0) {
+            no_atual1->variavel[i]->valor.cadeia = valor;
+          }
+        }
+      } else {
+        printf("Operacao invalida\n");
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA
   ;
 
 impressao:
@@ -397,15 +503,10 @@ no* procurar_variavel_em_pilha(char* nome){
 tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
   no* atual = p->topo;
   while (atual != NULL) {
-    printf("entrei aqui 1\n");
     if (atual != NULL) {
-      printf("entrei aqui 2\n");
       for (int i = 0; i < atual->qtdVariaveis; i++) {
-        printf("entrei aqui 3\n");
         if (atual->variavel[i] != NULL && atual->variavel[i]->nome != NULL && nome != NULL) {
-          printf("entrei aqui 4\n");
           if (strcmp(atual->variavel[i]->nome, nome) == 0) {
-            printf("entrei aqui 5\n");
             return atual->variavel[i]->tipo_variavel;
           }
         }
@@ -415,7 +516,7 @@ tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
   }
 } 
 
-/* ESTA QUEBRANDO AQUI */
+/* FUNCIONANDO */
 void criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor) {
   if (nome == NULL || atual == NULL) {
     printf("1 %s\n", nome);
