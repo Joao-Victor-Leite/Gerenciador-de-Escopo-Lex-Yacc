@@ -266,7 +266,9 @@ atribuicao:
       }
     }
   }
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR{
+
+  }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA {
     remover_espacos($1.cadeia);
     remover_espacos($3.cadeia);
@@ -402,7 +404,6 @@ void yyerror(char *s) {
 
 /* FUNCIONANDO */
 void iniciar_pilha() {
-  printf("Iniciando pilha\n");
   p = (pilha *)malloc(sizeof(pilha));
   if (p != NULL) {
       p->topo = NULL;
@@ -412,7 +413,6 @@ void iniciar_pilha() {
 
 /* FUNCIONANDO */
 void empilhar(char *nomeNo) {
-  printf("Empilhando %s\n", nomeNo);
   no *novo = (no *)malloc(sizeof(no));
   if (novo == NULL) {
     printf("Erro ao alocar memória.\n");
@@ -444,7 +444,6 @@ void empilhar(char *nomeNo) {
   novo->qtdVariaveis = 0;
   novo->variavel = NULL;
   p->topo = novo;
-  printf("No %s empilhado\n", novo->nome);
 }
 
 /* FUNCIONANDO */
@@ -465,7 +464,6 @@ void desempilhar(char* nomeNo){
     if (nomeExtraido) {
       strncpy(nomeExtraido, inicio, tamanho);
       nomeExtraido[tamanho] = '\0';
-      printf("Desempilhando %s\n", nomeExtraido);
     } else {
       printf("Erro ao alocar memória para o nome.\n");
       exit(1);
@@ -484,8 +482,6 @@ void desempilhar(char* nomeNo){
       }
       free(atual->nome);
       free(atual);
-      printf("Desempilhado %s\n", nomeExtraido);
-      /* imprimir_pilha(); */
       return;
     }
     anterior = atual;
@@ -495,6 +491,7 @@ void desempilhar(char* nomeNo){
   printf("Nó '%s' não encontrado.\n", nomeNo);
 }
 
+/* FUNCIONANDO */
 void imprimir_pilha(){
   no *atual = p->topo;
   while (atual != NULL) {
@@ -503,6 +500,7 @@ void imprimir_pilha(){
   }
 }
 
+/* FUNCIONANDO */
 void imprimir_variavel(variavel *var){
   if (var->tipo_variavel == TIPO_NUMERO){
     printf("%d\n", var->valor.numero);
@@ -523,6 +521,7 @@ void remover_espacos(char *str) {
   *dest = '\0'; 
 }
 
+/* FUNCIONANDO */
 no* procurar_variavel_em_pilha(char* nome){
   no* atual = p->topo;
   while (atual != NULL){
@@ -536,6 +535,7 @@ no* procurar_variavel_em_pilha(char* nome){
   return NULL;
 }
 
+/* FUNCIONANDO */
 tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
   no* atual = p->topo;
   while (atual != NULL) {
@@ -555,7 +555,6 @@ tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
 /* FUNCIONANDO */
 void criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor) {
   if (nome == NULL || atual == NULL) {
-    printf("1 %s\n", nome);
     printf("Parâmetros inválidos\n");
     return;
   }
