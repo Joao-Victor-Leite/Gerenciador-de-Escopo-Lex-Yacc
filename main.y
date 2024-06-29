@@ -149,9 +149,116 @@ declaracao_cadeia:
       criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, valor);
     }
   }
-  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    int tamanho3 = strlen($3.cadeia);
+    if ($3.cadeia[tamanho3 - 1] == '\"') {
+      $3.cadeia[tamanho3 - 1] = '\0';
+    }
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($5.cadeia);
+
+    if (no_atual1 == NULL && no_atual2 != NULL) {
+      no_atual1 = p->topo;
+      tipoVariavel tipo2;
+      tipo2 = procurar_tipo_variavel_em_pilha($5.cadeia);
+      if (tipo2 == TIPO_CADEIA) {
+        for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
+          if (strcmp(no_atual2->variavel[i]->nome, $5.cadeia) == 0){
+            char* valor5Ajustado = no_atual2->variavel[i]->valor.cadeia;
+            if (valor5Ajustado[1] == '\"') {
+              valor5Ajustado += 2;
+            }
+
+            char* valor = (char*)malloc(strlen($3.cadeia) + strlen(valor5Ajustado) + 1);
+            strcpy(valor, $3.cadeia);
+            strcat(valor, valor5Ajustado);
+            criar_variavel(no_atual1, $1.cadeia, TIPO_CADEIA, valor);
+          }
+        }
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    if ($5.cadeia[0] == '\"') {
+      memmove($5.cadeia, $5.cadeia + 1, strlen($5.cadeia));
+    }
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
+
+    if (no_atual1 == NULL && no_atual2 != NULL) {
+      no_atual1 = p->topo;
+      tipoVariavel tipo2;
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      if (tipo2 == TIPO_CADEIA) {
+        for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
+          if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0){
+            char* valor3Ajustado = no_atual2->variavel[i]->valor.cadeia;
+            int tamanhoValor3Ajustado = strlen(valor3Ajustado);
+            if (valor3Ajustado[tamanhoValor3Ajustado - 1] == '\"') {
+              valor3Ajustado[tamanhoValor3Ajustado - 1] = '\0';
+            }
+
+            char* valor = (char*)malloc(strlen($5.cadeia) + strlen(valor3Ajustado) + 1);
+            strcpy(valor, valor3Ajustado);
+            strcat(valor, $5.cadeia);
+            criar_variavel(no_atual1, $1.cadeia, TIPO_CADEIA, valor);
+          }
+        }
+      }
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
+    no* no_atual3 = procurar_variavel_em_pilha($5.cadeia);
+
+    if (no_atual1 == NULL && no_atual2 != NULL && no_atual3 != NULL){
+      no_atual1 = p->topo;
+      tipoVariavel tipo2, tipo3;
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      tipo3 = procurar_tipo_variavel_em_pilha($5.cadeia);
+
+      if (tipo2 == TIPO_CADEIA && tipo3 == TIPO_CADEIA) {
+        for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
+          if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
+            for (int j = 0; j < no_atual3->qtdVariaveis; j++) {
+              if (strcmp(no_atual3->variavel[j]->nome, $5.cadeia) == 0) {
+                char* valor2Ajustado = no_atual2->variavel[i]->valor.cadeia;
+                int tamanhoValor2 = strlen(valor2Ajustado);
+                if (valor2Ajustado[tamanhoValor2 - 1] == '\"') {
+                  valor2Ajustado[tamanhoValor2 - 1] = '\0';
+                }
+
+                char* valor3Ajustado = no_atual3->variavel[j]->valor.cadeia;
+                if (valor3Ajustado[0] == '\"') {
+                  valor3Ajustado += 1;
+                }
+
+                char* valor = (char*)malloc(strlen(valor2Ajustado) + strlen(valor3Ajustado) + 1);
+                strcpy(valor, valor2Ajustado);
+                strcat(valor, valor3Ajustado);
+                criar_variavel(no_atual1, $1.cadeia, TIPO_CADEIA, valor);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
   ;
 
 declaracao_numero:
@@ -179,8 +286,20 @@ declaracao_numero:
       printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
-  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_NUMERO
-  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR
+  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_NUMERO {
+    remover_espacos($1.cadeia);
+    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
+    if (no_atual == NULL) {
+      no_atual = p->topo;
+      int* valor = (int*)malloc(sizeof(int));
+      *valor = $3.numero + $5.numero;
+      criar_variavel(no_atual, $1.cadeia, TIPO_NUMERO, valor);
+      
+    }
+  }
+  | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR {
+    
+  }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
   ;
@@ -340,19 +459,16 @@ atribuicao:
           if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
             for (int j = 0; j < no_atual3->qtdVariaveis; j++) {
               char* valor3Ajustado = no_atual3->variavel[j]->valor.cadeia;
-              // Remover a primeira aspa de valor3Ajustado, se houver
               if (valor3Ajustado[0] == '\"') {
-                valor3Ajustado++; // Pula a primeira aspa
+                valor3Ajustado++;
               }
 
-              // Concatenar os valores das variáveis sem aspas extras
               char* valorConcatenado = (char*)malloc(strlen(no_atual2->variavel[i]->valor.cadeia) + strlen(valor3Ajustado) + 1);
               strcpy(valorConcatenado, no_atual2->variavel[i]->valor.cadeia);
               strcat(valorConcatenado, valor3Ajustado);
 
               for (int k = 0; k < no_atual1->qtdVariaveis; k++) {
                 if (strcmp(no_atual1->variavel[k]->nome, $1.cadeia) == 0) {
-                  // Liberar memória antiga, se necessário
                   if (no_atual1->variavel[k]->valor.cadeia != NULL) {
                     free(no_atual1->variavel[k]->valor.cadeia);
                   }
@@ -709,5 +825,4 @@ void criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor) {
     atual->variavel[atual->qtdVariaveis] = var;
     atual->qtdVariaveis += 1;
   }
-
 }
