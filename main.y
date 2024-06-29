@@ -408,6 +408,9 @@ atribuicao:
             }
           }
         }
+      } else {
+        printf("Erro: tipos não compatíveis\n");
+      
       }
     }
   }
@@ -771,9 +774,9 @@ void imprimir_pilha(){
 /* FUNCIONANDO */
 void imprimir_variavel(variavel *var){
   if (var->tipo_variavel == TIPO_NUMERO){
-    printf("%d\n", var->valor.numero);
+    printf("%d", var->valor.numero);
   } else if (var->tipo_variavel == TIPO_CADEIA){
-    printf("%s\n", var->valor.cadeia);
+    printf("%s", var->valor.cadeia);
   }
 }
 
