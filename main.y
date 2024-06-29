@@ -93,8 +93,8 @@ declaracao:
   ;
 
 declaracao_multipla_cadeia:
-  declaracao_cadeia
-  | declaracao_multipla_cadeia ',' declaracao_cadeia
+  declaracao_multipla_cadeia ',' declaracao_cadeia
+  | declaracao_cadeia
   ;
 
 declaracao_multipla_numero:
@@ -125,7 +125,30 @@ declaracao_cadeia:
       printf("Variavel '%s' ja declarada\n", $1.cadeia);
     }
   }
-  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA
+  | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA {
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    int tamanho3 = strlen($3.cadeia);
+    if ($3.cadeia[tamanho3 - 1] == '\"') {
+      $3.cadeia[tamanho3 - 1] = '\0';
+    }
+
+    char* cadeia5Ajustada = $5.cadeia;
+    if (cadeia5Ajustada[0] == '\"') {
+      cadeia5Ajustada++;
+    }
+
+    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
+    if (no_atual == NULL) {
+      no_atual = p->topo;
+      char* valor = (char*)malloc(strlen($3.cadeia) + strlen(cadeia5Ajustada) + 1);
+      strcpy(valor, $3.cadeia);
+      strcat(valor, cadeia5Ajustada);
+      criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, valor);
+    }
+  }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR
