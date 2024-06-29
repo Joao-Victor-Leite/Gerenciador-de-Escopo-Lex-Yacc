@@ -335,7 +335,43 @@ atribuicao:
       }
     }
   }
-  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA
+  | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA{
+    remover_espacos($1.cadeia);
+    remover_espacos($3.cadeia);
+    remover_espacos($5.cadeia);
+
+    int tamanho5 = strlen($5.cadeia);
+    if ($5.cadeia[tamanho5 - 1] == '\"') {
+      $5.cadeia[tamanho5 - 1] = '\0';
+    }
+
+    no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
+    no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
+
+    if (no_atual1 != NULL && no_atual2 != NULL) {
+      tipoVariavel tipo1, tipo2;
+      tipo1 = procurar_tipo_variavel_em_pilha($1.cadeia);
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+
+      if (tipo1 == TIPO_CADEIA && tipo2 == TIPO_CADEIA) {
+        char* valor3Ajustado = no_atual2->variavel[0]->valor.cadeia;
+        if (valor3Ajustado[1] == '\"') {
+          valor3Ajustado += 2;
+        }
+
+        char* valor = (char*)malloc(strlen($5.cadeia) + strlen(valor3Ajustado) + 1);
+        strcpy(valor, $5.cadeia);
+        strcat(valor, valor3Ajustado);
+        for (int i = 0; i < no_atual1->qtdVariaveis; i++) {
+          if (strcmp(no_atual1->variavel[i]->nome, $1.cadeia) == 0) {
+            no_atual1->variavel[i]->valor.cadeia = valor;
+          }
+        }
+      } else {
+        printf("Operacao invalida\n");
+      }
+    }
+  }
   ;
 
 impressao:
