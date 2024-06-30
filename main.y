@@ -37,14 +37,11 @@ void empilhar(char *nomeNo);
 void desempilhar(char* nomeNo);
 void imprimir_pilha();
 void imprimir_variavel(variavel *var);
-void remover_espacos(char *str);
 void remover_espacos_inicio_fim(char *str);
 no* procurar_variavel_em_pilha(char* nome);
-no* procurar_ultima_declaracao_variavel(char* nome_variavel);
 tipoVariavel procurar_tipo_variavel_em_pilha(char* nome);
 void criar_variavel(no *, char *, tipoVariavel, void *);
 
-int encontrado = 0;
 pilha* p;
 %}
 
@@ -77,19 +74,18 @@ linha:
 
 inicio_escopo:
   BLOCO_INICIO{
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     empilhar($1.cadeia);
   }
   ;
 
 fim_escopo:
   BLOCO_FIM{
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     desempilhar($1.cadeia);
   }
   ;
 
-/* DANDO ERRO AQUI */
 declaracao:
   TIPO_CADEIA declaracao_multipla_cadeia
   | TIPO_NUMERO declaracao_multipla_numero
@@ -110,14 +106,11 @@ declaracao_cadeia:
     remover_espacos_inicio_fim($1.cadeia);
     remover_espacos_inicio_fim($3.cadeia);
     no* no_atual = p->topo;
-    /* no* no_atual = procurar_variavel_em_pilha($1.cadeia); */
-    printf("NO: %s\n", no_atual->nome);
     char *cadeia = $3.cadeia;
     criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, cadeia);
-      /* printf("Variavel '%s' ja declarada\n", $1.cadeia); */
   }
   | TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual == NULL) {
       no_atual = p->topo;
@@ -128,9 +121,9 @@ declaracao_cadeia:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     int tamanho3 = strlen($3.cadeia);
     if ($3.cadeia[tamanho3 - 1] == '\"') {
@@ -152,9 +145,9 @@ declaracao_cadeia:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     int tamanho3 = strlen($3.cadeia);
     if ($3.cadeia[tamanho3 - 1] == '\"') {
@@ -186,9 +179,9 @@ declaracao_cadeia:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     if ($5.cadeia[0] == '\"') {
       memmove($5.cadeia, $5.cadeia + 1, strlen($5.cadeia));
@@ -220,9 +213,9 @@ declaracao_cadeia:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
@@ -265,7 +258,7 @@ declaracao_cadeia:
 
 declaracao_numero:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual == NULL) {
       no_atual = p->topo;
@@ -277,7 +270,7 @@ declaracao_numero:
     }
   }
   | TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual == NULL) {
       no_atual = p->topo;
@@ -289,7 +282,7 @@ declaracao_numero:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_NUMERO {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual == NULL) {
       no_atual = p->topo;
@@ -300,8 +293,8 @@ declaracao_numero:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
     no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual2 = procurar_variavel_em_pilha($5.cadeia);
     if (no_atual1 == NULL && no_atual2 != NULL) {
@@ -421,7 +414,7 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_NUMERO {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual != NULL){
       tipoVariavel tipo = procurar_tipo_variavel_em_pilha($1.cadeia);
@@ -439,8 +432,8 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_NUMERO MAIS TK_IDENTIFICADOR{
-    remover_espacos($1.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
     no* no_atual_1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual_2 = procurar_variavel_em_pilha($5.cadeia);
     if (no_atual_1 != NULL && no_atual_2 != NULL){
@@ -461,8 +454,8 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO{
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
     no* no_atual_1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual_2 = procurar_variavel_em_pilha($3.cadeia);
     if (no_atual_1 != NULL && no_atual_2 != NULL){
@@ -483,7 +476,6 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR{
-    /* PRECISO ARRUMAR A PARTE DE CADEIA */
     remover_espacos_inicio_fim($1.cadeia);
     remover_espacos_inicio_fim($3.cadeia);
     remover_espacos_inicio_fim($5.cadeia);
@@ -524,7 +516,8 @@ atribuicao:
                 valor3Ajustado++;
               }
 
-              char* valorConcatenado = (char*)malloc(strlen(no_atual2->variavel[i]->valor.cadeia) + strlen(valor3Ajustado) + 1);
+              size_t tamanhoConcatenado = strlen(no_atual2->variavel[i]->valor.cadeia) + strlen(valor3Ajustado) + 1;
+              char* valorConcatenado = (char*)malloc(tamanhoConcatenado);
               strcpy(valorConcatenado, no_atual2->variavel[i]->valor.cadeia);
               strcat(valorConcatenado, valor3Ajustado);
 
@@ -534,6 +527,8 @@ atribuicao:
                     free(no_atual1->variavel[k]->valor.cadeia);
                   }
                   no_atual1->variavel[k]->valor.cadeia = valorConcatenado;
+                  valorConcatenado = NULL; 
+                  break;
                 }
               }
             }
@@ -543,9 +538,9 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_CADEIA {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     int tamanho3 = strlen($3.cadeia);
     if ($3.cadeia[tamanho3 - 1] == '\"') {
@@ -575,9 +570,9 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA MAIS TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     int tamanho3 = strlen($3.cadeia);
     if ($3.cadeia[tamanho3 - 1] == '\"') {
@@ -611,9 +606,9 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_CADEIA{
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     int tamanho5 = strlen($5.cadeia);
     if ($5.cadeia[tamanho5 - 1] == '\"') {
@@ -651,6 +646,7 @@ atribuicao:
 
 impressao:
   PRINT TK_IDENTIFICADOR {
+    remover_espacos_inicio_fim($2.cadeia);
     no* no_atual;
     no_atual = procurar_variavel_em_pilha($2.cadeia);
     if (no_atual != NULL){
@@ -679,7 +675,6 @@ void yyerror(char *s) {
    fprintf(stderr, "erro: %s\n", s);
 }
 
-/* FUNCIONANDO */
 void iniciar_pilha() {
   p = (pilha *)malloc(sizeof(pilha));
   if (p != NULL) {
@@ -687,7 +682,6 @@ void iniciar_pilha() {
   }
 }
 
-/* FUNCIONANDO */
 void empilhar(char *nomeNo) {
   no *novo = (no *)malloc(sizeof(no));
   if (novo == NULL) {
@@ -722,7 +716,6 @@ void empilhar(char *nomeNo) {
   p->topo = novo;
 }
 
-/* FUNCIONANDO */
 void desempilhar(char* nomeNo){
   if (p -> topo == NULL){
     printf("Pilha vazia\n");
@@ -767,7 +760,6 @@ void desempilhar(char* nomeNo){
   printf("Nó '%s' não encontrado.\n", nomeNo);
 }
 
-/* FUNCIONANDO */
 void imprimir_pilha(){
   no *atual = p->topo;
   while (atual != NULL) {
@@ -776,7 +768,6 @@ void imprimir_pilha(){
   }
 }
 
-/* FUNCIONANDO */
 void imprimir_variavel(variavel *var){
   if (var->tipo_variavel == TIPO_NUMERO){
     printf("%d\n", var->valor.numero);
@@ -785,44 +776,27 @@ void imprimir_variavel(variavel *var){
   }
 }
 
-/* FUNCIONANDO */
-void remover_espacos(char *str) { 
-  char *dest = str; 
-  while (*str != '\0') { 
-    if (*str != ' ') { 
-      *dest++ = *str; 
-    } 
-    str++; 
-  } 
-  *dest = '\0'; 
-}
-
 void remover_espacos_inicio_fim(char *str) {
     int inicio = 0, fim = strlen(str) - 1;
 
-    // Encontrar o primeiro caractere não espaço no início
     while (isspace(str[inicio])) {
         inicio++;
     }
 
-    // Encontrar o último caractere não espaço no final
     while (fim >= 0 && isspace(str[fim])) {
         fim--;
     }
 
-    // Copiar a parte relevante de volta para a string original
     int tamanho_final = fim - inicio + 1;
     memmove(str, str + inicio, tamanho_final);
-    str[tamanho_final] = '\0'; // Adicionar o terminador nulo no final da nova string
+    str[tamanho_final] = '\0';
 }
 
-/* FUNCIONANDO */
 no* procurar_variavel_em_pilha(char* nome){
   no* atual = p->topo;
   while (atual != NULL){
     for (int i = 0; i < atual->qtdVariaveis; i++){
       if (strcmp(atual->variavel[i]->nome, nome) == 0){
-        printf("encontrei a variavel %s no No: %s\n", atual->variavel[i]->nome, atual->nome);
         return atual;
       }
     }
@@ -831,23 +805,6 @@ no* procurar_variavel_em_pilha(char* nome){
   return NULL;
 }
 
-no* procurar_ultima_declaracao_variavel(char* nome_variavel) {
-    no* atual = p->topo;
-    no* ultima_declaracao = NULL;
-
-    while (atual != NULL) {
-        for (int i = 0; i < atual->qtdVariaveis; i++) {
-            if (strcmp(atual->variavel[i]->nome, nome_variavel) == 0) {
-                ultima_declaracao = atual;
-            }
-        }
-        atual = atual->prox;
-    }
-
-    return ultima_declaracao;
-}
-
-/* FUNCIONANDO */
 tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
   no* atual = p->topo;
   while (atual != NULL) {
