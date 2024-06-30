@@ -364,13 +364,18 @@ atribuicao:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
     remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
-    if (no_atual != NULL){;
-      int* valor = (int*)malloc(sizeof(int));
-      *valor = $3.numero;
-      for (int i = 0; i < no_atual->qtdVariaveis; i++){
-        if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
-          no_atual->variavel[i]->valor.numero = *valor;
+    if (no_atual != NULL){
+      tipoVariavel tipo = procurar_tipo_variavel_em_pilha($1.cadeia);
+      if (tipo == TIPO_NUMERO){
+        int* valor = (int*)malloc(sizeof(int));
+        *valor = $3.numero;
+        for (int i = 0; i < no_atual->qtdVariaveis; i++){
+          if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
+            no_atual->variavel[i]->valor.numero = *valor;
+          }
         }
+      } else {
+        printf("Erro: tipos não compatíveis\n");
       }
     }
   }
@@ -380,11 +385,16 @@ atribuicao:
     no* no_atual = NULL;
     no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual != NULL){
-      char* valor = $3.cadeia;
-      for (int i = 0; i < no_atual->qtdVariaveis; i++){
-        if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
-          no_atual->variavel[i]->valor.cadeia = valor;
+      tipoVariavel tipo = procurar_tipo_variavel_em_pilha($1.cadeia);
+      if (tipo == TIPO_CADEIA){
+        char* valor = $3.cadeia;
+        for (int i = 0; i < no_atual->qtdVariaveis; i++){
+          if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
+            no_atual->variavel[i]->valor.cadeia = valor;
+          }
         }
+      } else {
+        printf("Erro: tipos não compatíveis\n");
       }
     }
   }
@@ -821,7 +831,6 @@ tipoVariavel procurar_tipo_variavel_em_pilha(char* nome) {
   }
 } 
 
-/* FUNCIONANDO */
 void criar_variavel(no *atual, char *nome, tipoVariavel tipo, void *valor) {
   if (nome == NULL || atual == NULL) {
     printf("Parâmetros inválidos\n");
