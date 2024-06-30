@@ -4,6 +4,7 @@ void yyerror(char* s);
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 
 typedef enum {
@@ -37,7 +38,9 @@ void desempilhar(char* nomeNo);
 void imprimir_pilha();
 void imprimir_variavel(variavel *var);
 void remover_espacos(char *str);
+void remover_espacos_inicio_fim(char *str);
 no* procurar_variavel_em_pilha(char* nome);
+no* procurar_ultima_declaracao_variavel(char* nome_variavel);
 tipoVariavel procurar_tipo_variavel_em_pilha(char* nome);
 void criar_variavel(no *, char *, tipoVariavel, void *);
 
@@ -69,7 +72,7 @@ linha:
   | declaracao  ';'
   | atribuicao  ';'
   | impressao   ';'
-  | 
+  |
   ;
 
 inicio_escopo:
@@ -104,22 +107,21 @@ declaracao_multipla_numero:
 
 declaracao_cadeia:
   TK_IDENTIFICADOR IGUAL TK_CADEIA {
-    remover_espacos($1.cadeia);
-    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
-    if (no_atual == NULL) {
-      no_atual = p->topo;
-      char *cadeia = $3.cadeia;
-      criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, cadeia);
-    }else{
-      printf("Variavel '%s' ja declarada\n", $1.cadeia);
-    }
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    no* no_atual = p->topo;
+    /* no* no_atual = procurar_variavel_em_pilha($1.cadeia); */
+    printf("NO: %s\n", no_atual->nome);
+    char *cadeia = $3.cadeia;
+    criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, cadeia);
+      /* printf("Variavel '%s' ja declarada\n", $1.cadeia); */
   }
   | TK_IDENTIFICADOR {
     remover_espacos($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual == NULL) {
       no_atual = p->topo;
-      char *cadeia = "";
+      char *cadeia = "_";
       criar_variavel(no_atual, $1.cadeia, TIPO_CADEIA, cadeia);
     }else{
       printf("Variavel '%s' ja declarada\n", $1.cadeia);
@@ -363,10 +365,9 @@ declaracao_numero:
 
 atribuicao:
   TK_IDENTIFICADOR IGUAL TK_NUMERO {
-    remover_espacos($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
     no* no_atual = procurar_variavel_em_pilha($1.cadeia);
-    if (no_atual != NULL){
-      printf("entrei aqui");
+    if (no_atual != NULL){;
       int* valor = (int*)malloc(sizeof(int));
       *valor = $3.numero;
       for (int i = 0; i < no_atual->qtdVariaveis; i++){
@@ -377,14 +378,15 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_CADEIA {
-    remover_espacos($1.cadeia);
-    no* no_atual = procurar_variavel_em_pilha($1.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    no* no_atual = NULL;
+    no_atual = procurar_variavel_em_pilha($1.cadeia);
     if (no_atual != NULL){
-      no_atual = p->topo;
-      char *cadeia = $3.cadeia;
-      for (int i = 0; i < no_atual -> qtdVariaveis; i++){
+      char* valor = $3.cadeia;
+      for (int i = 0; i < no_atual->qtdVariaveis; i++){
         if (strcmp(no_atual->variavel[i]->nome, $1.cadeia) == 0){
-          no_atual->variavel[i]->valor.cadeia = $3.cadeia;
+          no_atual->variavel[i]->valor.cadeia = valor;
         }
       }
     }
@@ -774,9 +776,9 @@ void imprimir_pilha(){
 /* FUNCIONANDO */
 void imprimir_variavel(variavel *var){
   if (var->tipo_variavel == TIPO_NUMERO){
-    printf("%d", var->valor.numero);
+    printf("%d\n", var->valor.numero);
   } else if (var->tipo_variavel == TIPO_CADEIA){
-    printf("%s", var->valor.cadeia);
+    printf("%s\n", var->valor.cadeia);
   }
 }
 
@@ -792,18 +794,54 @@ void remover_espacos(char *str) {
   *dest = '\0'; 
 }
 
+void remover_espacos_inicio_fim(char *str) {
+    int inicio = 0, fim = strlen(str) - 1;
+
+    // Encontrar o primeiro caractere não espaço no início
+    while (isspace(str[inicio])) {
+        inicio++;
+    }
+
+    // Encontrar o último caractere não espaço no final
+    while (fim >= 0 && isspace(str[fim])) {
+        fim--;
+    }
+
+    // Copiar a parte relevante de volta para a string original
+    int tamanho_final = fim - inicio + 1;
+    memmove(str, str + inicio, tamanho_final);
+    str[tamanho_final] = '\0'; // Adicionar o terminador nulo no final da nova string
+}
+
 /* FUNCIONANDO */
 no* procurar_variavel_em_pilha(char* nome){
   no* atual = p->topo;
   while (atual != NULL){
     for (int i = 0; i < atual->qtdVariaveis; i++){
       if (strcmp(atual->variavel[i]->nome, nome) == 0){
+        printf("encontrei a variavel %s no No: %s\n", atual->variavel[i]->nome, atual->nome);
         return atual;
       }
     }
     atual = atual->prox;
   }
   return NULL;
+}
+
+no* procurar_ultima_declaracao_variavel(char* nome_variavel) {
+    no* atual = p->topo;
+    no* ultima_declaracao = NULL;
+
+    while (atual != NULL) {
+        for (int i = 0; i < atual->qtdVariaveis; i++) {
+            if (strcmp(atual->variavel[i]->nome, nome_variavel) == 0) {
+                ultima_declaracao = atual;
+            }
+        }
+        atual = atual->prox;
+    }
+
+    return ultima_declaracao;
 }
 
 /* FUNCIONANDO */
