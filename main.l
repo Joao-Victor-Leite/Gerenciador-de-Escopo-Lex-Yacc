@@ -18,5 +18,5 @@
 "="                                     {return IGUAL;}
 ";"                                     {return ';';}
 ","                                     {return ',';}
-[ \t]+                                  {/* ignorar espaços em branco */}
+[ \t\n]+                                { /* ignorar espaços em branco */ }
 %%
