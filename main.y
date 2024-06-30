@@ -316,8 +316,8 @@ declaracao_numero:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_NUMERO {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
     no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
     if (no_atual1 == NULL && no_atual2 != NULL) {
@@ -326,15 +326,19 @@ declaracao_numero:
       tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
       if (tipo2 == TIPO_NUMERO) {
         int* valor = (int*)malloc(sizeof(int));
-        *valor = no_atual2->variavel[0]->valor.numero + $5.numero;
-        criar_variavel(no_atual1, $1.cadeia, TIPO_NUMERO, valor);
+        for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
+          if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
+            *valor = no_atual2->variavel[i]->valor.numero + $5.numero;
+            criar_variavel(no_atual1, $1.cadeia, TIPO_NUMERO, valor);
+          }
+        }
       }
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
@@ -392,8 +396,8 @@ atribuicao:
     }
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR {
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
     no* no_atual_1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual_2 = procurar_variavel_em_pilha($3.cadeia);
     if (no_atual_1 != NULL && no_atual_2 != NULL){
@@ -480,9 +484,9 @@ atribuicao:
   }
   | TK_IDENTIFICADOR IGUAL TK_IDENTIFICADOR MAIS TK_IDENTIFICADOR{
     /* PRECISO ARRUMAR A PARTE DE CADEIA */
-    remover_espacos($1.cadeia);
-    remover_espacos($3.cadeia);
-    remover_espacos($5.cadeia);
+    remover_espacos_inicio_fim($1.cadeia);
+    remover_espacos_inicio_fim($3.cadeia);
+    remover_espacos_inicio_fim($5.cadeia);
 
     no* no_atual1 = procurar_variavel_em_pilha($1.cadeia);
     no* no_atual2 = procurar_variavel_em_pilha($3.cadeia);
@@ -491,8 +495,8 @@ atribuicao:
     if (no_atual1 != NULL && no_atual2 != NULL && no_atual3 != NULL) {
       tipoVariavel tipo1, tipo2, tipo3;
       tipo1 = procurar_tipo_variavel_em_pilha($1.cadeia);
-      tipo2 = procurar_tipo_variavel_em_pilha($2.cadeia);
-      tipo3 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      tipo2 = procurar_tipo_variavel_em_pilha($3.cadeia);
+      tipo3 = procurar_tipo_variavel_em_pilha($5.cadeia);
 
       if (tipo1 == TIPO_NUMERO && tipo2 == TIPO_NUMERO && tipo3 == TIPO_NUMERO) {
         int* valor = (int*)malloc(sizeof(int));
@@ -511,12 +515,7 @@ atribuicao:
           }
         }
       } else if (tipo1 == TIPO_CADEIA && tipo2 == TIPO_CADEIA && tipo3 == TIPO_CADEIA) {
-        // Remover a última aspa de $3.cadeia, se houver
-        int tamanho3 = strlen($3.cadeia);
-        if ($3.cadeia[tamanho3 - 1] == '\"') {
-            $3.cadeia[tamanho3 - 1] = '\0';
-        }
-        
+        /* A CONCATENACAO DE STRINGS ESTA INCOMPLETA */
         for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
           if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
             for (int j = 0; j < no_atual3->qtdVariaveis; j++) {
@@ -654,10 +653,14 @@ impressao:
   PRINT TK_IDENTIFICADOR {
     no* no_atual;
     no_atual = procurar_variavel_em_pilha($2.cadeia);
-    for (int i = 0; i < no_atual->qtdVariaveis; i++){
-      if(strcmp(no_atual->variavel[i]->nome, $2.cadeia) == 0){
-        imprimir_variavel(no_atual->variavel[i]);
+    if (no_atual != NULL){
+      for (int i = 0; i < no_atual->qtdVariaveis; i++){
+        if(strcmp(no_atual->variavel[i]->nome, $2.cadeia) == 0){
+          imprimir_variavel(no_atual->variavel[i]);
+        }
       }
+    } else {
+      printf("Erro: variável não declarada\n");
     }
   }
   ;
