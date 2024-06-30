@@ -505,7 +505,7 @@ atribuicao:
         for (int i = 0; i < no_atual2->qtdVariaveis; i++) {
           if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
             for (int j = 0; j < no_atual3->qtdVariaveis; j++) {
-              if (strcmp(no_atual2->variavel[i]->nome, $3.cadeia) == 0) {
+              if (strcmp(no_atual3->variavel[j]->nome, $5.cadeia) == 0) {
                 *valor = no_atual2->variavel[i]->valor.numero + no_atual3->variavel[j]->valor.numero;
               }
             }
